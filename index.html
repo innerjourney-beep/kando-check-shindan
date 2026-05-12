@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>感度チェック診断</title>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #13131a;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --gold: #c9a96e;
+      --gold-light: #e8c990;
+      --text: #e8e6e0;
+      --text-muted: #8a8880;
+      --text-dim: #5a5858;
+      --accent: #7c6fcd;
+      --yes: #c9a96e;
+      --no: #4a4a5a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      line-height: 1.8;
+    }
+
+    /* 背景装飾 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(124,111,205,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 30% at 80% 80%, rgba(201,169,110,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ===== START SCREEN ===== */
+    #screen-start {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 60px;
+      animation: fadeIn 0.8s ease;
+    }
+
+    .logo-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--gold));
+      margin-bottom: 32px;
+    }
+
+    .tag {
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(28px, 7vw, 42px);
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 48px;
+      letter-spacing: 1px;
+    }
+
+    .description-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      margin-bottom: 40px;
+    }
+
+    .description-box p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 2;
+      margin-bottom: 12px;
+    }
+
+    .description-box p:last-child { margin-bottom: 0; }
+
+    .description-box strong {
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .name-section {
+      width: 100%;
+      margin-bottom: 32px;
+    }
+
+    .name-label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .name-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 16px;
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .name-input:focus {
+      border-color: var(--gold);
+    }
+
+    .name-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .btn-start {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      color: #1a1208;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .btn-start:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .meta {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    /* ===== QUIZ SCREEN ===== */
+    #screen-quiz { display: none; animation: fadeIn 0.5s ease; }
+
+    .progress-header {
+      padding-top: 40px;
+      margin-bottom: 40px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-label {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--gold);
+    }
+
+    .progress-count {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border-radius: 1px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .question-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 24px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .q-number {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      margin-bottom: 20px;
+    }
+
+    .q-text {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: 600;
+      line-height: 1.7;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .q-example {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.9;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .q-example span {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .answer-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-answer {
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .btn-yes {
+      background: transparent;
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .btn-yes:hover {
+      background: rgba(201,169,110,0.12);
+      transform: translateY(-2px);
+    }
+
+    .btn-no {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
+    .btn-no:hover {
+      background: rgba(255,255,255,0.04);
+      transform: translateY(-2px);
+    }
+
+    /* ===== RESULT SCREEN ===== */
+    #screen-result { display: none; animation: fadeIn 0.8s ease; }
+
+    .result-header {
+      padding-top: 60px;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .result-tag {
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    .result-name {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(22px, 5vw, 32px);
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .result-headline {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(18px, 4vw, 24px);
+      font-weight: 600;
+      color: var(--gold-light);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .score-display {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 8px 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    .result-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      margin: 32px auto;
+    }
+
+    .result-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 24px;
+    }
+
+    .result-body p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 2.1;
+      margin-bottom: 20px;
+    }
+
+    .result-body p:last-child { margin-bottom: 0; }
+
+    .result-body strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .result-body em {
+      color: var(--gold);
+      font-style: normal;
+    }
+
+    .section-title {
+      font-family: 'Shippori Mincho', serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bullet-list {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .bullet-list li {
+      font-size: 14px;
+      color: var(--text-muted);
+      padding: 8px 0 8px 20px;
+      position: relative;
+      line-height: 1.8;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .bullet-list li::before {
+      content: '・';
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+    }
+
+    .check-list {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .check-list li {
+      font-size: 14px;
+      color: var(--text-muted);
+      padding: 10px 0 10px 28px;
+      position: relative;
+      line-height: 1.8;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .check-list li::before {
+      content: '☑';
+      position: absolute;
+      left: 0;
+      color: var(--gold);
+      font-size: 13px;
+    }
+
+    .highlight-box {
+      background: rgba(201,169,110,0.06);
+      border: 1px solid rgba(201,169,110,0.2);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+    }
+
+    .highlight-box p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 2;
+      margin-bottom: 0 !important;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, rgba(201,169,110,0.1), rgba(124,111,205,0.06));
+      border: 1px solid rgba(201,169,110,0.25);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .cta-box p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 2;
+      margin-bottom: 0 !important;
+    }
+
+    .cta-box strong {
+      color: var(--gold-light) !important;
+    }
+
+    .btn-retry {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      margin-top: 32px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .btn-retry:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .question-card { padding: 24px; }
+      .result-body { padding: 24px; }
+      .description-box { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== START ===== -->
+  <div id="screen-start">
+    <div class="logo-line"></div>
+    <div class="tag">Narui Mai × 特典</div>
+    <h1>感度チェック診断</h1>
+    <p class="subtitle">思考優位派のための、感じる力チェック</p>
+
+    <div class="description-box">
+      <p>この診断の目的は、<strong>感情を感じる前に全てを思考で分析して感じるのを封印したり、感じてるつもりになっている自分の癖に気づく</strong>ためのものです。</p>
+      <p>内側を変えるには、まず最初に自分で自分の行動・思考・感情・身体の感覚に気づく＝<strong>観察する力</strong>が必要だからです。</p>
+      <p>15の質問に「はい」「いいえ」で答えてください。</p>
+    </div>
+
+    <div class="name-section">
+      <span class="name-label">あなたのお名前（ニックネームでOK）</span>
+      <input type="text" class="name-input" id="nameInput" placeholder="例：まいこ" maxlength="20" oninput="checkName()">
+    </div>
+
+    <button class="btn-start" id="btnStart" onclick="startQuiz()" disabled style="opacity:0.4;cursor:not-allowed;">診断をはじめる</button>
+    <p class="meta">所要時間：約3分</p>
+  </div>
+
+  <!-- ===== QUIZ ===== -->
+  <div id="screen-quiz">
+    <div class="progress-header">
+      <div class="progress-info">
+        <span class="progress-label">QUESTION</span>
+        <span class="progress-count" id="progressCount">1 / 15</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="question-card">
+      <div>
+        <div class="q-number" id="qNumber">Q01</div>
+        <div class="q-text" id="qText"></div>
+        <div class="q-example" id="qExample"></div>
+      </div>
+    </div>
+
+    <div class="answer-btns">
+      <button class="btn-answer btn-yes" onclick="answer(true)">はい</button>
+      <button class="btn-answer btn-no" onclick="answer(false)">いいえ</button>
+    </div>
+  </div>
+
+  <!-- ===== RESULT ===== -->
+  <div id="screen-result">
+    <div class="result-header">
+      <div class="result-tag">RESULT</div>
+      <div class="result-name" id="resultName"></div>
+      <div class="result-headline" id="resultHeadline"></div>
+      <div class="score-display" id="scoreDisplay"></div>
+    </div>
+    <div class="result-divider"></div>
+    <div id="resultBody"></div>
+    <button class="btn-retry" onclick="retry()">もう一度診断する</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    text: "嫌なことがあった後、気づいたらスマホを見ていたことがある",
+    example: "例：上司に怒られた直後にSNSを開く／彼氏と喧嘩した後すぐYouTubeを流し始める／子供に怒鳴ってしまった罪悪感からスマホゲームに逃げる"
+  },
+  {
+    text: "話し合いが深くなってきたとき、その場を離れたくなる",
+    example: "例：夫婦の話し合いが核心に近づいた途端に「ちょっとトイレ」と席を立つ／親に本音を話しかけて「もういいや」と打ち切る／職場で1on1が深くなると急に時計を気にし始める"
+  },
+  {
+    text: "モヤモヤしているとき、気づいたら食べていた・飲んでいた",
+    example: "例：クレカの明細を見た後にお菓子を食べる／親から電話がきた後にコーヒーを飲み始める／喧嘩した夜に食べ過ぎる"
+  },
+  {
+    text: "感情が動きそうな場面で、急に別の作業を始めてしまう",
+    example: "例：子供に謝らなきゃと思った瞬間に洗い物を始める／彼に言いたいことがあるのに急に部屋の片付けをする／仕事でミスした後に関係ない資料を整理し始める"
+  },
+  {
+    text: "泣きそうになったとき、無意識にこらえてしまう",
+    example: "例：映画で泣きそうになると深呼吸して止める／職場でグッときても「ここでは泣けない」と蓋をする／子供の成長に感動しかけて「しっかりしなきゃ」と切り替える"
+  },
+  {
+    text: "誰かに傷つけられたとき、悲しむより先に「なぜそうなったか」を考え始める",
+    example: "例：彼に冷たくされた理由を分析する／親に否定されたとき「育ち方がそうだから」と結論づける／友人に裏切られても「あの人にはそういう背景がある」と考える"
+  },
+  {
+    text: "自分のモヤモヤを、相手の言動で説明しようとすることが多い",
+    example: "例：「あの一言がなければ私は傷つかなかった」と考える／「上司がああいう人だから私は動けない」と納得する／「親の育て方のせいで私はこうなった」と整理する"
+  },
+  {
+    text: "感情が動いたとき「でも相手にも事情がある」と考えて感情を収める",
+    example: "例：パートナーに怒りを感じても「忙しいんだから仕方ない」と思い直す／友人に傷ついても「あの子も余裕がなかっただけ」と自分を納得させる"
+  },
+  {
+    text: "不安を感じたとき、最悪の結果を想定して対策を考え始める",
+    example: "例：収入が不安になると家計の計算を始める／健康診断の結果を待ちながらネットで症状を調べまくる／子供の成績が下がると塾や勉強法を調べ始める"
+  },
+  {
+    text: "怒りを感じたとき、「自分が悪かったのかも」と反省から入ることが多い",
+    example: "例：パートナーに怒鳴られても「私の言い方が悪かった」と思う／職場で理不尽なことをされても「私の至らなさが原因かも」と考える"
+  },
+  {
+    text: "相手が不機嫌だと、自分のせいかもと先に考えてしまう",
+    example: "例：夫が無言で帰宅すると「何かしたかな」と頭をフル回転させる／上司の機嫌が悪い日は朝から胃が痛くなる／親の顔色を見て今日の空気を読もうとする"
+  },
+  {
+    text: "自分の気持ちより、相手がどう感じるかを先に考えて行動することが多い",
+    example: "例：本当は断りたいのに「断ったら嫌われるかも」と引き受ける／自分の意見があっても「場が乱れるから」と言わない／欲しいものがあっても「こんなもの欲しがるなんて」と引っ込める"
+  },
+  {
+    text: "「この人を怒らせてはいけない」と感じる相手が、人生で何人かいた",
+    example: "例：子供の頃の親、学校の先生、職場の上司、付き合った相手…人は変わるのに同じ緊張感がある"
+  },
+  {
+    text: "誰かに頼られると断れず、気づいたら相手の問題を引き受けていることがある",
+    example: "例：友人の愚痴を何時間も聞いてしまう／職場で「あなたしかいない」と言われると断れない／家族の問題をいつの間にか自分が解決しようとしている"
+  },
+  {
+    text: "「本当はどうしたいか」を聞かれると、すぐに答えられないことがある",
+    example: "例：ランチで「何食べたい？」と聞かれると相手に合わせてしまう／将来の夢を聞かれると「特に…」となる／パートナーに「何がしたい？」と聞かれると「なんでもいい」と答えてしまう"
+  }
+];
+
+let currentQ = 0;
+let yesCount = 0;
+let userName = '';
+
+function checkName() {
+  const input = document.getElementById('nameInput').value.trim();
+  const btn = document.getElementById('btnStart');
+  if (input.length > 0) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+function startQuiz() {
+  const input = document.getElementById('nameInput').value.trim();
+  if (!input) return;
+  userName = input;
+  document.getElementById('screen-start').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('qNumber').textContent = 'Q' + String(currentQ + 1).padStart(2, '0');
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('qExample').innerHTML = q.example
+    .split('／').map(s => '<span>' + s + '</span>').join('');
+  document.getElementById('progressCount').textContent = (currentQ + 1) + ' / 15';
+  document.getElementById('progressFill').style.width = ((currentQ + 1) / 15 * 100) + '%';
+}
+
+function answer(isYes) {
+  if (isYes) yesCount++;
+  currentQ++;
+  if (currentQ < questions.length) {
+    const card = document.querySelector('.question-card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(8px)';
+    setTimeout(() => {
+      showQuestion();
+      card.style.transition = 'opacity 0.3s, transform 0.3s';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 150);
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('screen-quiz').style.display = 'none';
+  document.getElementById('screen-result').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  const isAB = yesCount >= 6;
+
+  document.getElementById('resultName').textContent = userName + 'さんの診断結果';
+  document.getElementById('scoreDisplay').textContent = '「はい」の数：' + yesCount + ' / 15';
+
+  if (isAB) {
+    document.getElementById('resultHeadline').textContent = '「無自覚に」感じる力を抑えています。';
+    document.getElementById('resultBody').innerHTML = getResultAB();
+  } else {
+    document.getElementById('resultHeadline').textContent = '感情へのアクセスができています。内観を深める段階にいます。';
+    document.getElementById('resultBody').innerHTML = getResultC();
+  }
+}
+
+function getResultAB() {
+  return `
+  <div class="result-body">
+    <p>この診断の目的は、感情を感じる前に全てを思考で分析して感じるのを封印したり、感じてるつもりになっている自分の癖に気づくためのものです。</p>
+    <p>内側を変えるには、まず最初に自分で自分の行動・思考・感情・身体の感覚に気づく＝<em>観察する力</em>が必要だからです。</p>
+    <p>今回、<strong>${userName}さんの診断結果は、「無自覚に」感じる力を抑えています。</strong><br>ポイントは「無自覚」です。</p>
+
+    <div class="section-title">こういう方、身近にいませんか？</div>
+    <ul class="bullet-list">
+      <li>核心的な話になった途端、急に怒り出して話をシャットアウトする人</li>
+      <li>不機嫌になってだんまりを決め込む人</li>
+      <li>機嫌が悪いという空気だけで、周りをコントロールしようとする人</li>
+    </ul>
+
+    <p>具体的に想像してください。いませんか？</p>
+    <p>夫婦喧嘩の時、友人と会話してる時、上司や同僚と話している時、上記の状況になったりしますか？</p>
+
+    <div class="highlight-box">
+      <p>こういう状況の人は、感情が豊かなのではありません。<strong>逆です。</strong><br><br>
+      自分の内側から湧いてくる不快な感情を、1分すら感じていられないから、無自覚にも感じないように、まさかのこういう行動になるんです。<br><br>
+      ネガティブ感情、例えば怒りの背景にある本当の感情（悲しみ、孤独感など）と向き合う前に、シャットアウトして逃げている状態です。<br><br>
+      本来感じるべき感情を感じてしまうと痛みが伴うので、自分が感じるべき感情を感じないように他人にその責任を押し付けるか逃げるかを無意識にやっています。</p>
+    </div>
+
+    <div class="section-title">【行動パターンチェック】</div>
+    <p>無自覚に感じることを避ける例として、その身近な人または自分自身で、このような行動をしていないかチェックしてみてください。</p>
+    <ul class="check-list">
+      <li>嫌なことがあるとすぐタバコを吸いに行く</li>
+      <li>お菓子や甘いもので気を紛らわす</li>
+      <li>SNSや動画を無限にスクロールし始める</li>
+      <li>占いや他人への相談で、未来の不安を埋めようとする</li>
+      <li>モヤモヤすると、すぐ誰かに話を聞いてもらいに行く</li>
+    </ul>
+    <p>共通点は1分黙って自分のそのネガティブ感情の痛みを感じる「前に」無自覚にこういう行動をしてしまうこと。</p>
+
+    <div class="section-title">【思考パターンチェック】</div>
+    <p>これは行動パターンの例ですが、思考についても確認してください。行動で逃げていない人も、思考で感じることをショートカットしているパターンがあります。</p>
+    <ul class="check-list">
+      <li>違和感を感じても「この人にも理由があるし」と相手側につく</li>
+      <li>お菓子食べながら、SNSチェックしながら、頭の中が常にグルグルフル稼働</li>
+    </ul>
+    <p>これは一旦ネガティブ感情を感じるという工程をスキップしています。</p>
+
+    <div class="section-title">今回の診断の目的</div>
+    <p>あえて、${userName}さんまたは身近な他人とお伝えしたのは、自分自身だと気付けないことも、他人を冷静に見ると「あ、そうかも」と見れるからです。</p>
+    <p>自分のことは見えにくくても、他人のことは見えます。そしてその観察が、じわじわと自分への気づきに変わっていきます。</p>
+    <p>気づく作業はそこから入ってもいいので、まずは思考優位なこと、感じる力を無自覚に抑えているという認識をするための診断テストでした。</p>
+
+    <div class="highlight-box">
+      <p>この診断結果が出た方は、まず<em>気づく・観察するトレーニング</em>が最適です。内観は感情が伴うものですが、やってもうまくいかないという場合、この感じる力を無自覚に封印しているという可能性が本当に高いです。<br><br>
+      どうしてうまくいかないんだろうと自分を責めず、この感じる部分を無自覚に避けていたかも！と気づくだけで今後の内観が劇的に変わってきます。</p>
+    </div>
+
+    <div class="cta-box">
+      <p><strong>特典としてジャーナリングの基本のやり方をお送りしますので、是非トライしてみてください。</strong></p>
+    </div>
+  </div>`;
+}
+
+function getResultC() {
+  return `
+  <div class="result-body">
+    <p>この診断の目的は、感情を感じる前に全てを思考で分析して感じるのを封印したり、感じてるつもりになっている自分の癖に気づくためのものです。</p>
+    <p>今回、<strong>${userName}さんの診断結果は、無自覚に思考で抑えずに感じる習慣があるという結果がでました。</strong><br>あとは内観を深めていく段階ですね。</p>
+
+    <div class="section-title">こういう方、身近にいませんか？</div>
+    <ul class="bullet-list">
+      <li>悲しいとき、ちゃんと悲しめる人</li>
+      <li>感情が動いた瞬間に「あ、今何かを感じた」と気づける人</li>
+      <li>でも何度内観しても、同じところをぐるぐるしている人</li>
+    </ul>
+
+    <p>具体的に想像してください。いませんか？</p>
+    <p>感情は受け取れる。向き合おうともしている。でも内観のたびに同じテーマが出てきて「またここか」となる。感じた後、これをどう扱えばいいのかがわからず止まってしまう。</p>
+
+    <div class="highlight-box">
+      <p>これは感じる力が弱いのではありません。<br><br>
+      <strong>感じた感情を、どう掘り下げるかの地図がないだけです。</strong></p>
+    </div>
+
+    <div class="section-title">【内観が詰まるポイントチェック】</div>
+    <ul class="check-list">
+      <li>感情は受け取れるのに「で、これをどうすればいいの？」で止まる</li>
+      <li>深い感情が出てきたとき、その場でどう扱えばいいかわからなくなる</li>
+      <li>内観中に感情が出てくると、いつの間にか分析に切り替えてしまっている</li>
+      <li>同じテーマの感情が、何度内観しても繰り返し出てくる</li>
+    </ul>
+    <p>共通点は、感じることはできているのに、そこから先の「掘り下げ方」がわからないことです。</p>
+    <p>感じた感情が、過去のどの記憶と繋がっているか。どの信念を作っているか。その構造を見ていけるようになると、内観のスピードが一気に変わります。</p>
+
+    <div class="section-title">今回の診断の目的</div>
+    <p>あえて${userName}さんまたは身近な他人とお伝えしたのは、自分自身だと気付けないことも、他人を冷静に見ると「あ、そうかも」と見れるからです。</p>
+    <p>感じる力はある。あとはその感情をどう使って内観を深めるかどうか。その具体的な地図を手に入れることで、ぐるぐるしていた内観が一気に動き始めます。</p>
+
+    <div class="highlight-box">
+      <p>後日お届けする内観の実演特典で、実際の内観の落とし込みを丸ごとお見せします。<br><br>
+      恋愛、お金、人間関係、それぞれのテーマで実際にどう掘り下げていくか、ノートを赤裸々に公開しますね。自分の内観と照らし合わせながら読んでみてください。きっと「あ、ここが詰まってたのか」という瞬間が来るはずです。</p>
+    </div>
+
+    <div class="cta-box">
+      <p><strong>引き続き応援しています。</strong></p>
+    </div>
+  </div>`;
+}
+
+function retry() {
+  currentQ = 0;
+  yesCount = 0;
+  userName = '';
+  document.getElementById('nameInput').value = '';
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true;
+  btn.style.opacity = '0.4';
+  btn.style.cursor = 'not-allowed';
+  document.getElementById('screen-result').style.display = 'none';
+  document.getElementById('screen-start').style.display = 'flex';
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
+`;
